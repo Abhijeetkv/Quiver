@@ -4,10 +4,8 @@ import DottedGlowBackground from "@/components/ui/dotted-glow-background";
 export function Background() {
   return (
     <div className="fixed inset-0 -z-10">
-      {/* 🔥 Pitch-black base layer */}
       <div className="absolute inset-0 " />
 
-      {/* ✨ Dotted glow overlay */}
       <DottedGlowBackground
         className="pointer-events-none opacity-40 dark:opacity-100"
         opacity={1}
