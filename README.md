@@ -206,8 +206,24 @@ quiver/
 │   │   ├── global-error.tsx              # App-level error reporter (reports to Sentry)
 │   │   ├── globals.css                   # Global styles
 │   │   └── layout.tsx                    # Root layout for App Router
-│   ├── components/        # Shared UI components (app-header, app-sidebar, ui/*)
-│   ├── config/            # App constants (`constants.ts`)
+│   ├── components/                       # Shared UI components
+│   │   ├── app-header.tsx
+│   │   ├── app-sidebar.tsx
+│   │   ├── background.tsx
+│   │   ├── entity-components.tsx
+│   │   ├── initial-node.tsx
+│   │   ├── node-selector.tsx
+│   │   ├── upgrade-modal.tsx
+│   │   ├── workflow-node.tsx
+│   │   ├── react-flow/
+│   │   │   ├── base-handle.tsx
+│   │   │   ├── base-node.tsx
+│   │   │   ├── node-status-indicator.tsx
+│   │   │   └── placeholder-node.tsx
+│   │   └── ui/                           # shadcn/ui + Radix primitives
+│   ├── config/            # App constants and configuration
+│   │   ├── constants.ts
+│   │   └── node-components.ts
 │   ├── features/          # Domain feature folders
 │   │   ├── auth/
 │   │   ├── editor/
@@ -215,8 +231,9 @@ quiver/
 │   │   ├── subscriptions/
 │   │   ├── triggers/
 │   │   └── workflows/     # Workflow editor UI + server router
-│   ├── hooks/             # Custom React hooks
-│   ├── inngest/           # Background jobs / function definitions
+│   ├── hooks/             # Custom React hooks│   │   ├── use-entity-search.tsx
+│   │   ├── use-mobile.ts
+│   │   └── use-upgrade-modal.tsx│   ├── inngest/           # Background jobs / function definitions
 │   │   ├── client.ts
 │   │   └── functions.ts
 │   ├── instrumentation.ts         # Server Sentry init
