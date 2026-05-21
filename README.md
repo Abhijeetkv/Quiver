@@ -1,4 +1,4 @@
-# Quiver 🎯
+# Quiver
 
 > A modern, open-source automation platform - An alternative to Zapier and N8N
 
