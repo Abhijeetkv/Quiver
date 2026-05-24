@@ -3,9 +3,9 @@ import { NonRetriableError } from "inngest";
 import ky, { Options as KyOptions } from "ky";
 
 type HttpRequestData = {
-    variableName?: string;
-    endpoint?: string;
-    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    variableName: string;
+    endpoint: string;
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     body?: string;
 }
 
@@ -24,9 +24,13 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
         throw new NonRetriableError("No variable name provided for HTTP request");
     }
 
+    if(!data.method) {
+        throw new NonRetriableError("method not provided for HTTP request");
+    }
+
     const result = await step.run("http-request", async () => {
-        const endpoint = data.endpoint!;
-        const method = data.method || "GET";
+        const endpoint = data.endpoint;
+        const method = data.method;
 
         const options: KyOptions = { method}
 
