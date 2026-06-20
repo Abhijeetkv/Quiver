@@ -15,7 +15,7 @@ export const executeWorkflow = inngest.createFunction(
     ],
   },
 
-  async ({ event, step }) => {
+  async ({ event, step, publish }) => {
     const workflowId = event.data.workflowId;
 
     if (!workflowId) {
@@ -52,6 +52,7 @@ export const executeWorkflow = inngest.createFunction(
         nodeId: node.id,
         context,
         step,
+        publish,
       });
     }
 
