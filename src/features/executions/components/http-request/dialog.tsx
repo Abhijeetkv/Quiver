@@ -60,6 +60,7 @@ export const HttpRequestDialog = ({
   defaultValues = {},
 }: Props) => {
   const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       variableName: defaultValues?.variableName || "",
       endpoint: defaultValues?.endpoint || "",
