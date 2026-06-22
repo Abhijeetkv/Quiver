@@ -10,23 +10,26 @@ import type { NodeStatus } from "@/components/react-flow/node-status-indicator";
  * Returns the current NodeStatus and an optional message.
  */
 export function useNodeStatus(nodeId: string, enabled = true) {
-  const topics = ["status"] as const;
-  const channel = httpRequestChannel({ nodeId });
-
   const { connectionStatus, messages } = useRealtime({
-    channel,
-    topics,
+    channel: httpRequestChannel,
+    topics: ["status"],
     enabled,
-    token: () => getRealtimeToken(nodeId),
+    token: () => getRealtimeToken(),
   });
 
+  // Find the latest message for this specific node
   const latestStatus = messages.byTopic.status;
 
-  const state: NodeStatus = latestStatus?.data?.state ?? "initial";
-  const message: string | undefined = latestStatus?.data?.message ?? undefined;
+  const isMatch = latestStatus?.data?.nodeId === nodeId;
+  const status: NodeStatus = isMatch
+    ? (latestStatus.data.status as NodeStatus)
+    : "initial";
+  const message: string | undefined = isMatch
+    ? latestStatus.data.message
+    : undefined;
 
   return {
-    status: state,
+    status,
     message,
     connectionStatus,
   };

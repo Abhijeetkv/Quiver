@@ -22,7 +22,6 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
     nodeId,
     context,
     step,
-    publish,
 }) => {
 
     if(!data.endpoint) {
@@ -37,16 +36,15 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
         throw new NonRetriableError("method not provided for HTTP request");
     }
 
-    const ch = httpRequestChannel({ nodeId });
-
-    // Publish loading state (non-durable, fine for transient progress)
-    await publish(ch.status, {
-        state: "loading" as const,
+    // Publish loading state (durable, memoized — unique per node)
+    await step.realtime.publish(`http-request-loading-${nodeId}`, httpRequestChannel.status, {
+        nodeId,
+        status: "loading" as const,
         message: `Sending ${data.method} request to ${data.endpoint}...`,
     });
 
     try {
-        const result = await step.run("http-request", async () => {
+        const result = await step.run(`http-request-${nodeId}`, async () => {
             const endpoint = Handlebars.compile(data.endpoint)(context);
             const method = data.method;
 
@@ -82,17 +80,19 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
             }
         });
 
-        // Publish success state (durable, won't re-fire on retry)
-        await step.realtime.publish("http-request-success", ch.status, {
-            state: "success" as const,
+        // Publish success state (durable, memoized — unique per node)
+        await step.realtime.publish(`http-request-success-${nodeId}`, httpRequestChannel.status, {
+            nodeId,
+            status: "success" as const,
             message: "Request completed successfully",
         });
 
         return result;
     } catch (error) {
-        // Publish error state (non-durable, acceptable for error reporting)
-        await publish(ch.status, {
-            state: "error" as const,
+        // Publish error state (durable, memoized — unique per node)
+        await step.realtime.publish(`http-request-error-${nodeId}`, httpRequestChannel.status, {
+            nodeId,
+            status: "error" as const,
             message: error instanceof Error ? error.message : "Unknown error occurred",
         });
         throw error;

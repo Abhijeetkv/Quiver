@@ -5,6 +5,7 @@ import { topologicalSort } from "./utils";
 import { NodeType } from "@/generated/prisma";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
 
+
 export const executeWorkflow = inngest.createFunction(
   {
     id: "execute-workflow",
@@ -14,9 +15,8 @@ export const executeWorkflow = inngest.createFunction(
       },
     ],
   },
-
-  async ({ event, step, publish }) => {
-    const workflowId = event.data.workflowId;
+  async ({ event, step }) => {
+    const workflowId = (event.data as Record<string, unknown>).workflowId as string;
 
     if (!workflowId) {
       throw new NonRetriableError("No workflow ID provided");
@@ -41,7 +41,7 @@ export const executeWorkflow = inngest.createFunction(
     );
 
     // initialize context with trigger data
-    let context = event.data.initialData || {};
+    let context = (event.data as Record<string, unknown>).initialData as Record<string, unknown> || {};
 
     // execute nodes in order
     for (const node of sortedNodes) {
@@ -52,7 +52,6 @@ export const executeWorkflow = inngest.createFunction(
         nodeId: node.id,
         context,
         step,
-        publish,
       });
     }
 
