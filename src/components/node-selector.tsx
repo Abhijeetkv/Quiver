@@ -37,6 +37,13 @@ const triggerNodes: NodeTypeOption[] = [
     label: "Google Form",
     description: "Trigger the workflow when a Google Form is submitted",
     icon: "/icons/googleform.svg",
+  },
+
+  {
+    type: NodeType.GEMINI,
+    label: "Gemini",
+    description: "Execute a Gemini AI request",
+    icon: "/icons/gemini.svg",
   }
 ];
 
