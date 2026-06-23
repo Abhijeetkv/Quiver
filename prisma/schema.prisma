@@ -9,16 +9,17 @@ datasource db {
 }
 
 model User {
-  id            String     @id
+  id            String       @id
   name          String
-  email         String     @unique
-  emailVerified Boolean    @default(false)
+  email         String       @unique
+  emailVerified Boolean      @default(false)
   image         String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @default(now()) @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
   workflows     Workflow[]
   accounts      Account[]
   sessions      Session[]
+  credentials   Credential[]
 
   @@map("user")
 }
@@ -67,6 +68,26 @@ model Verification {
   @@map("verification")
 }
 
+model Credential {
+  id        String         @id @default(cuid())
+  name      String
+  value     String
+  type      CredentialType
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  Node Node[]
+}
+
+enum CredentialType {
+  OPENAI
+  ANTHROPIC
+  GEMINI
+}
+
 model Workflow {
   id          String       @id @default(cuid())
   name        String
@@ -79,14 +100,18 @@ model Workflow {
 }
 
 model Node {
-  id                String       @id @default(cuid())
-  workflowId        String
-  name              String
-  type              NodeType
-  position          Json
-  data              Json         @default("{}")
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id         String   @id @default(cuid())
+  workflowId String
+  name       String
+  type       NodeType
+  position   Json
+  data       Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  credentialId String?
+  credential   Credential? @relation(fields: [credentialId], references: [id])
+
   outputConnections Connection[] @relation("FromNode")
   inputConnections  Connection[] @relation("ToNode")
   workflow          Workflow     @relation(fields: [workflowId], references: [id], onDelete: Cascade)
