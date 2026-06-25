@@ -4,42 +4,32 @@ import prisma from "@/lib/db";
 import { topologicalSort } from "./utils";
 import { ExecutionStatus, NodeType } from "@/generated/prisma";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
-
-import { httpRequestChannel } from "./channel/http-request";
-import { manualTriggerChannel } from "./channel/manual-trigger";
-import { googleFormTriggerChannel } from "./channel/google-form-trigger";
-import { stripeTriggerChannel } from "./channel/stripe-trigger";
-
-import { geminiChannel } from "./channel/gemini";
-import { openAiChannel } from "./channel/openai";
-import { anthropicChannel } from "./channel/anthropic";
-import { discordChannel } from "./channel/discord";
-import { slackChannel } from "./channel/slack";
+import { httpRequestChannel } from "./channels/http-request";
+import { manualTriggerChannel } from "./channels/manual-trigger";
+import { googleFormTriggerChannel } from "./channels/google-form-trigger";
+import { stripeTriggerChannel } from "./channels/stripe-trigger";
+import { geminiChannel } from "./channels/gemini";
+import { openAiChannel } from "./channels/openai";
+import { anthropicChannel } from "./channels/anthropic";
+import { discordChannel } from "./channels/discord";
+import { slackChannel } from "./channels/slack";
 
 export const executeWorkflow = inngest.createFunction(
-  {
+  { 
     id: "execute-workflow",
     retries: process.env.NODE_ENV === "production" ? 3 : 0,
-
-    onFailure: async ({ event, error }) => {
-      try {
-        await prisma.execution.update({
-          where: {
-            inngestEventId: event.id,
-          },
-          data: {
-            status: ExecutionStatus.FAILED,
-            error: error?.message ?? "Unknown error",
-            errorStack: error?.stack ?? null,
-            completedAt: new Date(),
-          },
-        });
-      } catch (err) {
-        console.error("Failed to update execution status:", err);
-      }
+    onFailure: async ({ event, step }) => {
+      return prisma.execution.update({
+        where: { inngestEventId: event.data.event.id },
+        data: {
+          status: ExecutionStatus.FAILED,
+          error: event.data.error.message,
+          errorStack: event.data.error.stack,
+        },
+      });
     },
   },
-  {
+  { 
     event: "workflows/execute.workflow",
     channels: [
       httpRequestChannel(),
@@ -58,9 +48,7 @@ export const executeWorkflow = inngest.createFunction(
     const workflowId = event.data.workflowId;
 
     if (!inngestEventId || !workflowId) {
-      throw new NonRetriableError(
-        "Event ID or Workflow ID is missing"
-      );
+      throw new NonRetriableError("Event ID or workflow ID is missing");
     }
 
     await step.run("create-execution", async () => {
@@ -68,46 +56,40 @@ export const executeWorkflow = inngest.createFunction(
         data: {
           workflowId,
           inngestEventId,
-          status: ExecutionStatus.RUNNING,
         },
       });
     });
 
-    const workflow = await step.run(
-      "load-workflow",
-      async () => {
-        return prisma.workflow.findUniqueOrThrow({
-          where: {
-            id: workflowId,
-          },
-          include: {
-            nodes: true,
-            connections: true,
-          },
-        });
-      }
-    );
+    const sortedNodes = await step.run("prepare-workflow", async () => {
+      const workflow = await prisma.workflow.findUniqueOrThrow({
+        where: { id: workflowId },
+        include: {
+          nodes: true,
+          connections: true,
+        },
+      });
 
-    const sortedNodes = topologicalSort(
-      workflow.nodes,
-      workflow.connections
-    );
+      return topologicalSort(workflow.nodes, workflow.connections);
+    });
 
-    const userId = workflow.userId;
+    const userId = await step.run("find-user-id", async () => {
+      const workflow = await prisma.workflow.findUniqueOrThrow({
+        where: { id: workflowId },
+        select: {
+          userId: true,
+        },
+      });
 
-    let context: Record<string, any> =
-      event.data.initialData || {};
+      return workflow.userId;
+    });
 
+    // Initialize context with any initial data from the trigger
+    let context = event.data.initialData || {};
+
+    // Execute each node
     for (const node of sortedNodes) {
       const executor = getExecutor(node.type as NodeType);
-
-      if (!executor) {
-        throw new NonRetriableError(
-          `No executor registered for node type: ${node.type}`
-        );
-      }
-
-      const result = await executor({
+      context = await executor({
         data: node.data as Record<string, unknown>,
         nodeId: node.id,
         userId,
@@ -115,29 +97,22 @@ export const executeWorkflow = inngest.createFunction(
         step,
         publish,
       });
-
-      context = {
-        ...context,
-        ...(result || {}),
-      };
     }
 
     await step.run("update-execution", async () => {
       return prisma.execution.update({
-        where: {
-          inngestEventId,
-        },
+        where: { inngestEventId, workflowId },
         data: {
           status: ExecutionStatus.SUCCESS,
           completedAt: new Date(),
           output: context,
         },
-      });
+      })
     });
 
     return {
       workflowId,
       result: context,
     };
-  }
+  },
 );
