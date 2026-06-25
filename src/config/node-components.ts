@@ -6,6 +6,10 @@ import { StripeTriggerNode } from "@/features/triggers/components/stripe-trigger
 import { GeminiNode } from "@/features/executions/components/gemini/node";
 import { NodeType } from "@/generated/prisma";
 import type { NodeTypes } from "@xyflow/react";
+import { SlackNode } from "@/features/executions/components/slack/node";
+import { DiscordNode } from "@/features/executions/components/discord/node";
+import { OpenAiNode } from "@/features/executions/components/openai/node";
+import { AnthropicNode } from "@/features/executions/components/anthropic/node";
 
 export const nodeComponents = {
     [NodeType.INITIAL]: InitialNode,
@@ -14,6 +18,10 @@ export const nodeComponents = {
     [NodeType.GOOGLE_FORM_TRIGGER]: GoogleFormTrigger,
     [NodeType.STRIPE_TRIGGER]: StripeTriggerNode,
     [NodeType.GEMINI]: GeminiNode,
+    [NodeType.OPENAI]: OpenAiNode,
+    [NodeType.ANTHROPIC]: AnthropicNode,
+    [NodeType.DISCORD]: DiscordNode,
+    [NodeType.SLACK]: SlackNode,
 
 } as const satisfies NodeTypes;
 
