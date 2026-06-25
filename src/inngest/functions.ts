@@ -4,15 +4,15 @@ import prisma from "@/lib/db";
 import { topologicalSort } from "./utils";
 import { ExecutionStatus, NodeType } from "@/generated/prisma";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
-import { httpRequestChannel } from "./channels/http-request";
-import { manualTriggerChannel } from "./channels/manual-trigger";
-import { googleFormTriggerChannel } from "./channels/google-form-trigger";
-import { stripeTriggerChannel } from "./channels/stripe-trigger";
-import { geminiChannel } from "./channels/gemini";
-import { openAiChannel } from "./channels/openai";
-import { anthropicChannel } from "./channels/anthropic";
-import { discordChannel } from "./channels/discord";
-import { slackChannel } from "./channels/slack";
+import { httpRequestChannel } from "./channel/http-request";
+import { manualTriggerChannel } from "./channel/manual-trigger";
+import { googleFormTriggerChannel } from "./channel/google-form-trigger";
+import { stripeTriggerChannel } from "./channel/stripe-trigger";
+import { geminiChannel } from "./channel/gemini";
+import { openAiChannel } from "./channel/openai";
+import { anthropicChannel } from "./channel/anthropic";
+import { discordChannel } from "./channel/discord";
+import { slackChannel } from "./channel/slack";
 
 export const executeWorkflow = inngest.createFunction(
   { 
