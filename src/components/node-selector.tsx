@@ -40,11 +40,13 @@ const triggerNodes: NodeTypeOption[] = [
   },
 
   {
-    type: NodeType.GEMINI,
-    label: "Gemini",
-    description: "Execute a Gemini AI request",
-    icon: "/icons/gemini.svg",
-  }
+    type: NodeType.STRIPE_TRIGGER,
+    label: "Stripe Event",
+    description: "Runs the flow when a Stripe Event is captured",
+    icon: "/icons/stripe.svg",
+  },
+
+  
 ];
 
 const executionNodes: NodeTypeOption[] = [
@@ -54,6 +56,36 @@ const executionNodes: NodeTypeOption[] = [
     description: "Make an HTTP request",
     icon: GlobeIcon,
   },
+  {
+    type: NodeType.GEMINI,
+    label: "Gemini",
+    description: "Execute a Gemini AI request",
+    icon: "/icons/gemini.svg",
+  },
+  {
+    type: NodeType.OPENAI,
+    label: "OpenAI",
+    description: "Execute an OpenAI request",
+    icon: "/icons/openai.svg",
+  },
+  {
+    type: NodeType.ANTHROPIC,
+    label: "Anthropic",
+    description: "Execute an Anthropic request",
+    icon: "/icons/anthropic.svg",
+  },
+  {
+    type: NodeType.DISCORD,
+    label: "Discord",
+    description: "Send a message to a Discord channel",
+    icon: "/icons/discord.svg",
+  },
+  {
+    type: NodeType.SLACK,
+    label: "Slack",
+    description: "Send a message to a Slack channel",
+    icon: "/icons/slack.svg",
+  }
 ];
 
 interface NodeSelectorProps {
