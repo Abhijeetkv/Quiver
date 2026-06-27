@@ -1,11 +1,16 @@
-import { channel, topic } from "@inngest/realtime";
+import { realtime } from "inngest";
+import { z } from "zod";
 
 export const ANTHROPIC_CHANNEL_NAME = "anthropic-execution";
 
-export const anthropicChannel = channel(ANTHROPIC_CHANNEL_NAME)
-  .addTopic(
-    topic("status").type<{
-      nodeId: string;
-      status: "loading" | "success" | "error";
-    }>(),
-  );
+export const anthropicChannel = realtime.channel({
+  name: ANTHROPIC_CHANNEL_NAME,
+  topics: {
+    status: {
+      schema: z.object({
+        nodeId: z.string(),
+        status: z.enum(["loading", "success", "error"]),
+      }),
+    },
+  },
+});

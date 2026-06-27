@@ -6,7 +6,7 @@ import { BaseExecutionNode } from "../base-execution-node";
 import { AnthropicDialog, AnthropicFormValues } from "./dialog";
 import { useNodeStatus } from "../../hooks/use-node-status";
 import { fetchAnthropicRealtimeToken } from "./action";
-import { ANTHROPIC_CHANNEL_NAME } from "@/inngest/channel/anthropic";
+import { anthropicChannel } from "@/inngest/channel/anthropic";
 
 type AnthropicNodeData = {
   variableName?: string;
@@ -23,7 +23,7 @@ export const AnthropicNode = memo((props: NodeProps<AnthropicNodeType>) => {
 
   const nodeStatus = useNodeStatus({
     nodeId: props.id,
-    channel: ANTHROPIC_CHANNEL_NAME,
+    channel: anthropicChannel,
     topic: "status",
     refreshToken: fetchAnthropicRealtimeToken,
   });

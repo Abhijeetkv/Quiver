@@ -27,41 +27,48 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
   userId,
   context,
   step,
-  publish,
 }) => {
-  await publish(
-    geminiChannel().status({
+  await step.realtime.publish(
+    `gemini-loading-${nodeId}`,
+    geminiChannel.status,
+    {
       nodeId,
       status: "loading",
-    }),
+    },
   );
 
   if (!data.variableName) {
-    await publish(
-      geminiChannel().status({
+    await step.realtime.publish(
+      `gemini-error-varname-${nodeId}`,
+      geminiChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("Gemini node: Variable name is missing");
   }
 
   if (!data.credentialId) {
-    await publish(
-      geminiChannel().status({
+    await step.realtime.publish(
+      `gemini-error-credential-${nodeId}`,
+      geminiChannel.status,
+      {
         nodeId,
         status: "error",
-      }),
+      },
     );
     throw new NonRetriableError("Gemini node: Credential is required");
   }
 
   if (!data.userPrompt) {
-    await publish(
-      geminiChannel().status({
+    await step.realtime.publish(
+      `gemini-error-prompt-${nodeId}`,
+      geminiChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("Gemini node: User prompt is missing");
   }
@@ -81,11 +88,13 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
   });
 
   if (!credential) {
-    await publish(
-      geminiChannel().status({
+    await step.realtime.publish(
+      `gemini-error-notfound-${nodeId}`,
+      geminiChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("Gemini node: Credential not found");
   }
@@ -115,11 +124,13 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
         ? steps[0].content[0].text
         : "";
     
-    await publish(
-      geminiChannel().status({
+    await step.realtime.publish(
+      `gemini-success-${nodeId}`,
+      geminiChannel.status,
+      {
         nodeId,
         status: "success",
-      }),
+      },
     );
 
     return {
@@ -129,11 +140,13 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
       },
     }
   } catch (error) {
-     await publish(
-      geminiChannel().status({
+    await step.realtime.publish(
+      `gemini-error-${nodeId}`,
+      geminiChannel.status,
+      {
         nodeId,
         status: "error",
-      }),
+      },
     );
     throw error;
   }

@@ -1,19 +1,12 @@
 "use server";
 
-import { getSubscriptionToken, type Realtime } from "@inngest/realtime";
+import { getClientSubscriptionToken } from "inngest/react";
 import { anthropicChannel } from "@/inngest/channel/anthropic";
 import { inngest } from "@/inngest/client";
 
-export type AnthropicToken = Realtime.Token<
-  typeof anthropicChannel,
-  ["status"]
->;
-
-export async function fetchAnthropicRealtimeToken(): Promise<AnthropicToken> {
-  const token = await getSubscriptionToken(inngest, {
-    channel: anthropicChannel(),
+export async function fetchAnthropicRealtimeToken() {
+  return getClientSubscriptionToken(inngest, {
+    channel: anthropicChannel,
     topics: ["status"],
   });
-
-  return token;
 };

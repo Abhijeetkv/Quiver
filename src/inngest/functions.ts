@@ -4,15 +4,6 @@ import prisma from "@/lib/db";
 import { topologicalSort } from "./utils";
 import { ExecutionStatus, NodeType } from "@/generated/prisma";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
-import { httpRequestChannel } from "./channel/http-request";
-import { manualTriggerChannel } from "./channel/manual-trigger";
-import { googleFormTriggerChannel } from "./channel/google-form-trigger";
-import { stripeTriggerChannel } from "./channel/stripe-trigger";
-import { geminiChannel } from "./channel/gemini";
-import { openAiChannel } from "./channel/openai";
-import { anthropicChannel } from "./channel/anthropic";
-import { discordChannel } from "./channel/discord";
-import { slackChannel } from "./channel/slack";
 
 export const executeWorkflow = inngest.createFunction(
   { 
@@ -28,22 +19,9 @@ export const executeWorkflow = inngest.createFunction(
         },
       });
     },
+    triggers: [{ event: "workflows/execute.workflow" }],
   },
-  { 
-    event: "workflows/execute.workflow",
-    channels: [
-      httpRequestChannel(),
-      manualTriggerChannel(),
-      googleFormTriggerChannel(),
-      stripeTriggerChannel(),
-      geminiChannel(),
-      openAiChannel(),
-      anthropicChannel(),
-      discordChannel(),
-      slackChannel(),
-    ],
-  },
-  async ({ event, step, publish }) => {
+  async ({ event, step }) => {
     const inngestEventId = event.id;
     const workflowId = event.data.workflowId;
 
@@ -95,7 +73,6 @@ export const executeWorkflow = inngest.createFunction(
         userId,
         context,
         step,
-        publish,
       });
     }
 

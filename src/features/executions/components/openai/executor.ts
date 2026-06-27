@@ -27,41 +27,48 @@ export const openAiExecutor: NodeExecutor<OpenAiData> = async ({
   userId,
   context,
   step,
-  publish,
 }) => {
-  await publish(
-    openAiChannel().status({
+  await step.realtime.publish(
+    `openai-loading-${nodeId}`,
+    openAiChannel.status,
+    {
       nodeId,
       status: "loading",
-    }),
+    },
   );
 
   if (!data.variableName) {
-    await publish(
-      openAiChannel().status({
+    await step.realtime.publish(
+      `openai-error-varname-${nodeId}`,
+      openAiChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("OpenAi node: Variable name is missing");
   }
 
   if (!data.credentialId) {
-    await publish(
-      openAiChannel().status({
+    await step.realtime.publish(
+      `openai-error-credential-${nodeId}`,
+      openAiChannel.status,
+      {
         nodeId,
         status: "error",
-      }),
+      },
     );
     throw new NonRetriableError("OpenAi node: Credential is required");
   }
 
   if (!data.userPrompt) {
-    await publish(
-      openAiChannel().status({
+    await step.realtime.publish(
+      `openai-error-prompt-${nodeId}`,
+      openAiChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("OpenAi node: User prompt is missing");
   }
@@ -81,11 +88,13 @@ export const openAiExecutor: NodeExecutor<OpenAiData> = async ({
   });
 
   if (!credential) {
-    await publish(
-      openAiChannel().status({
+    await step.realtime.publish(
+      `openai-error-notfound-${nodeId}`,
+      openAiChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("OpenAI node: Credential not found");
   }
@@ -115,11 +124,13 @@ export const openAiExecutor: NodeExecutor<OpenAiData> = async ({
         ? steps[0].content[0].text
         : "";
     
-    await publish(
-      openAiChannel().status({
+    await step.realtime.publish(
+      `openai-success-${nodeId}`,
+      openAiChannel.status,
+      {
         nodeId,
         status: "success",
-      }),
+      },
     );
 
     return {
@@ -129,11 +140,13 @@ export const openAiExecutor: NodeExecutor<OpenAiData> = async ({
       },
     }
   } catch (error) {
-     await publish(
-      openAiChannel().status({
+    await step.realtime.publish(
+      `openai-error-${nodeId}`,
+      openAiChannel.status,
+      {
         nodeId,
         status: "error",
-      }),
+      },
     );
     throw error;
   }

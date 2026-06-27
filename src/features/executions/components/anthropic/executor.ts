@@ -27,41 +27,48 @@ export const anthropicExecutor: NodeExecutor<AnthropicData> = async ({
   userId,
   context,
   step,
-  publish,
 }) => {
-  await publish(
-    anthropicChannel().status({
+  await step.realtime.publish(
+    `anthropic-loading-${nodeId}`,
+    anthropicChannel.status,
+    {
       nodeId,
       status: "loading",
-    }),
+    },
   );
 
   if (!data.variableName) {
-    await publish(
-      anthropicChannel().status({
+    await step.realtime.publish(
+      `anthropic-error-varname-${nodeId}`,
+      anthropicChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("Anthropic node: Variable name is missing");
   }
 
   if (!data.credentialId) {
-    await publish(
-      anthropicChannel().status({
+    await step.realtime.publish(
+      `anthropic-error-credential-${nodeId}`,
+      anthropicChannel.status,
+      {
         nodeId,
         status: "error",
-      }),
+      },
     );
     throw new NonRetriableError("Anthropic node: Credential is required");
   }
 
   if (!data.userPrompt) {
-    await publish(
-      anthropicChannel().status({
+    await step.realtime.publish(
+      `anthropic-error-prompt-${nodeId}`,
+      anthropicChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("Anthropic node: User prompt is missing");
   }
@@ -81,11 +88,13 @@ export const anthropicExecutor: NodeExecutor<AnthropicData> = async ({
   });
 
   if (!credential) {
-    await publish(
-      anthropicChannel().status({
+    await step.realtime.publish(
+      `anthropic-error-notfound-${nodeId}`,
+      anthropicChannel.status,
+      {
         nodeId,
         status: "error",
-      })
+      },
     );
     throw new NonRetriableError("Anthropic node: Credential not found");
   }
@@ -115,11 +124,13 @@ export const anthropicExecutor: NodeExecutor<AnthropicData> = async ({
         ? steps[0].content[0].text
         : "";
     
-    await publish(
-      anthropicChannel().status({
+    await step.realtime.publish(
+      `anthropic-success-${nodeId}`,
+      anthropicChannel.status,
+      {
         nodeId,
         status: "success",
-      }),
+      },
     );
 
     return {
@@ -129,11 +140,13 @@ export const anthropicExecutor: NodeExecutor<AnthropicData> = async ({
       },
     }
   } catch (error) {
-     await publish(
-      anthropicChannel().status({
+    await step.realtime.publish(
+      `anthropic-error-${nodeId}`,
+      anthropicChannel.status,
+      {
         nodeId,
         status: "error",
-      }),
+      },
     );
     throw error;
   }
