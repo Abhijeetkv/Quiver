@@ -16,10 +16,10 @@ model User {
   image         String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @default(now()) @updatedAt
+  credentials   Credential[]
   workflows     Workflow[]
   accounts      Account[]
   sessions      Session[]
-  credentials   Credential[]
 
   @@map("user")
 }
@@ -75,17 +75,9 @@ model Credential {
   type      CredentialType
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  Node Node[]
-}
-
-enum CredentialType {
-  OPENAI
-  ANTHROPIC
-  GEMINI
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Node      Node[]
 }
 
 model Workflow {
@@ -94,29 +86,25 @@ model Workflow {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   userId      String
-
   connections Connection[]
   executions  Execution[]
-
   nodes       Node[]
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Node {
-  id         String   @id @default(cuid())
-  workflowId String
-  name       String
-  type       NodeType
-  position   Json
-  data       Json     @default("{}")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  credentialId String?
-  credential   Credential? @relation(fields: [credentialId], references: [id])
-
+  id                String       @id @default(cuid())
+  workflowId        String
+  name              String
+  type              NodeType
+  position          Json
+  data              Json         @default("{}")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  credentialId      String?
   outputConnections Connection[] @relation("FromNode")
   inputConnections  Connection[] @relation("ToNode")
+  credential        Credential?  @relation(fields: [credentialId], references: [id])
   workflow          Workflow     @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 }
 
@@ -136,7 +124,24 @@ model Connection {
   @@unique([fromNodeId, toNodeId, fromOutput, toInput])
 }
 
+model Execution {
+  id             String          @id @default(cuid())
+  workflowId     String
+  status         ExecutionStatus @default(RUNNING)
+  error          String?
+  errorStack     String?
+  startedAt      DateTime        @default(now())
+  completedAt    DateTime?
+  inngestEventId String          @unique
+  output         Json?
+  workflow       Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+}
 
+enum CredentialType {
+  OPENAI
+  ANTHROPIC
+  GEMINI
+}
 
 enum NodeType {
   INITIAL
@@ -151,27 +156,8 @@ enum NodeType {
   SLACK
 }
 
-
 enum ExecutionStatus {
   RUNNING
   SUCCESS
   FAILED
-}
-
-model Execution {
-  id String @id @default(cuid())
-
-  workflowId String
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-
-  status ExecutionStatus @default(RUNNING)
-  error String? @db.Text
-  errorStack String? @db.Text
-
-  startedAt DateTime @default(now())
-  completedAt DateTime?
-
-  inngestEventId String @unique
-
-  output Json?
 }
