@@ -1,32 +1,25 @@
-import { CredentialsContainer, CredentialsError, CredentialsList, CredentialsLoading } from "@/features/credentials/components/credentials";
-import { credentialsParamsLoader } from "@/features/credentials/server/params-loader";
-import { prefetchCredentials } from "@/features/credentials/server/prefetch";
+import { CredentialForm } from "@/features/credentials/components/credential";
+import { CredentialsError, CredentialsLoading } from "@/features/credentials/components/credentials";
 import { requireAuth } from "@/lib/auth-utils";
 import { HydrateClient } from "@/trpc/server";
-import { SearchParams } from "nuqs";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-type Props = {
-  searchParams: Promise<SearchParams>;
-};
-
-const Page = async ({ searchParams }: Props) => {
+const Page = async () => {
   await requireAuth();
 
-  const params = await credentialsParamsLoader(searchParams);
-  prefetchCredentials(params);
-
   return (
-    <CredentialsContainer>
-      <HydrateClient>
-        <ErrorBoundary fallback={<CredentialsError />}>
-          <Suspense fallback={<CredentialsLoading />}>
-            <CredentialsList />
-          </Suspense>
-        </ErrorBoundary>
-      </HydrateClient>
-    </CredentialsContainer>
+    <div className="p-4 md:px-10 md:py-6 h-full">
+      <div className="mx-auto max-w-screen-md w-full flex flex-col gap-y-8 h-full">
+        <HydrateClient>
+          <ErrorBoundary fallback={<CredentialsError />}>
+            <Suspense fallback={<CredentialsLoading />}>
+              <CredentialForm />
+            </Suspense>
+          </ErrorBoundary>
+        </HydrateClient>
+      </div>
+    </div>
   );
 };
 

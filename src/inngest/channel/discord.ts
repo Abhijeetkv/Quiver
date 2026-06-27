@@ -1,11 +1,16 @@
-import { channel, topic } from "@inngest/realtime";
+import { realtime } from "inngest";
+import { z } from "zod";
 
 export const DISCORD_CHANNEL_NAME = "discord-execution";
 
-export const discordChannel = channel(DISCORD_CHANNEL_NAME)
-  .addTopic(
-    topic("status").type<{
-      nodeId: string;
-      status: "loading" | "success" | "error";
-    }>(),
-  );
+export const discordChannel = realtime.channel({
+  name: DISCORD_CHANNEL_NAME,
+  topics: {
+    status: {
+      schema: z.object({
+        nodeId: z.string(),
+        status: z.enum(["loading", "success", "error"]),
+      }),
+    },
+  },
+});

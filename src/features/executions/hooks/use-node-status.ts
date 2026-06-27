@@ -3,11 +3,10 @@
 import { useRealtime, type getClientSubscriptionToken } from "inngest/react";
 import { useState, useEffect } from "react";
 import type { NodeStatus } from "@/components/react-flow/node-status-indicator";
-import type { googleFormTriggerChannel } from "@/inngest/channel/google-form-trigger";
 
 interface UseNodeStatusOptions {
   nodeId: string;
-  channel: typeof googleFormTriggerChannel;
+  channel: Parameters<typeof useRealtime>[0]["channel"];
   topic: string;
   refreshToken: () => ReturnType<typeof getClientSubscriptionToken>;
 };

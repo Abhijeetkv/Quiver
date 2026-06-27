@@ -23,21 +23,24 @@ export const slackExecutor: NodeExecutor<SlackData> = async ({
   nodeId,
   context,
   step,
-  publish,
 }) => {
-  await publish(
-    slackChannel().status({
+  await step.realtime.publish(
+    `slack-loading-${nodeId}`,
+    slackChannel.status,
+    {
       nodeId,
       status: "loading",
-    }),
+    },
   );
 
   if (!data.content) {
-    await publish(
-      slackChannel().status({
+    await step.realtime.publish(
+      `slack-error-content-${nodeId}`,
+      slackChannel.status,
+      {
         nodeId,
         status: "error",
-      }),
+      },
     );
     throw new NonRetriableError("Slack node: Message content is required");
   }
@@ -48,12 +51,6 @@ export const slackExecutor: NodeExecutor<SlackData> = async ({
   try {
     const result = await step.run("slack-webhook", async () => {
       if (!data.webhookUrl) {
-        await publish(
-          slackChannel().status({
-            nodeId,
-            status: "error",
-          }),
-        );
         throw new NonRetriableError("Slack node: Webhook URL is required");
       }
 
@@ -64,12 +61,6 @@ export const slackExecutor: NodeExecutor<SlackData> = async ({
       });
 
       if (!data.variableName) {
-        await publish(
-          slackChannel().status({
-            nodeId,
-            status: "error",
-          })
-        );
         throw new NonRetriableError("Slack node: Variable name is missing");
       }
 
@@ -81,20 +72,24 @@ export const slackExecutor: NodeExecutor<SlackData> = async ({
       };
     });
     
-    await publish(
-      slackChannel().status({
+    await step.realtime.publish(
+      `slack-success-${nodeId}`,
+      slackChannel.status,
+      {
         nodeId,
         status: "success",
-      }),
+      },
     );
 
     return result;
   } catch (error) {
-     await publish(
-      slackChannel().status({
+    await step.realtime.publish(
+      `slack-error-${nodeId}`,
+      slackChannel.status,
+      {
         nodeId,
         status: "error",
-      }),
+      },
     );
     throw error;
   }
