@@ -188,82 +188,456 @@ Keep secrets out of source control. For local development you can create `.env.l
 
 ```
 quiver/
-├── .env                      # Local environment (not checked in)
-├── .env.sentry-build-plugin  # Sentry build plugin env shim
-├── prisma/                   # Prisma schema & migrations
-│   ├── schema.prisma
-│   └── migrations/
+├── prisma/                         # Database layer
+│   ├── schema.prisma               #   Data models, enums, relations
+│   └── migrations/                 #   Version-controlled schema migrations
+│
 ├── src/
-│   ├── app/                  # Next.js App Router
-│   │   ├── (auth)/           # Authentication route-group (login, signup)
-│   │   ├── (dashboard)/      # Dashboard route-group (editor, rest)
-│   │   ├── api/              # HTTP API routes
-│   │   │   ├── auth/[...all]/route.ts    # Better Auth handler
-│   │   │   ├── inngest/route.ts          # Inngest webhook endpoint
-│   │   │   ├── trpc/[trpc]/route.ts      # tRPC HTTP handler
-│   │   │   └── sentry-example-api/       # Sentry sample API route
-│   │   ├── sentry-example-page/          # Sentry sample frontend page
-│   │   ├── global-error.tsx              # App-level error reporter (reports to Sentry)
-│   │   ├── globals.css                   # Global styles
-│   │   └── layout.tsx                    # Root layout for App Router
-│   ├── components/                       # Shared UI components
-│   │   ├── app-header.tsx
-│   │   ├── app-sidebar.tsx
-│   │   ├── background.tsx
-│   │   ├── entity-components.tsx
-│   │   ├── initial-node.tsx
-│   │   ├── node-selector.tsx
-│   │   ├── upgrade-modal.tsx
-│   │   ├── workflow-node.tsx
-│   │   ├── react-flow/
-│   │   │   ├── base-handle.tsx
-│   │   │   ├── base-node.tsx
-│   │   │   ├── node-status-indicator.tsx
-│   │   │   └── placeholder-node.tsx
-│   │   └── ui/                           # shadcn/ui + Radix primitives
-│   ├── config/            # App constants and configuration
-│   │   ├── constants.ts
-│   │   └── node-components.ts
-│   ├── features/          # Domain feature folders
-│   │   ├── auth/
-│   │   ├── editor/
-│   │   ├── executions/
-│   │   ├── subscriptions/
-│   │   ├── triggers/
-│   │   └── workflows/     # Workflow editor UI + server router
-│   ├── hooks/             # Custom React hooks│   │   ├── use-entity-search.tsx
-│   │   ├── use-mobile.ts
-│   │   └── use-upgrade-modal.tsx│   ├── inngest/           # Background jobs / function definitions
-│   │   ├── client.ts
-│   │   └── functions.ts
-│   ├── instrumentation.ts         # Server Sentry init
-│   ├── instrumentation-client.ts  # Client Sentry + session replay init
-│   ├── lib/               # Utilities and integrations
-│   │   ├── auth.ts
-│   │   ├── auth-client.ts
-│   │   ├── auth-utils.ts
-│   │   ├── db.ts
-│   │   ├── polar.ts
-│   │   └── utils.ts
-│   ├── trpc/              # tRPC wiring
-│   │   ├── client.tsx
-│   │   ├── init.ts
-│   │   ├── query-client.ts
-│   │   ├── server.tsx
+│   ├── app/                        # ─── Next.js App Router ───────────────
+│   │   ├── (auth)/                 #   Public route-group
+│   │   │   ├── login/              #     Login page
+│   │   │   └── signup/             #     Registration page
+│   │   ├── (dashboard)/            #   Authenticated route-group
+│   │   │   ├── (editor)/           #     Full-screen workflow editor
+│   │   │   │   └── workflows/[workflowId]/
+│   │   │   └── (rest)/             #     Sidebar-based CRUD pages
+│   │   │       ├── workflows/      #       Workflow list
+│   │   │       ├── credentials/    #       Credential list + detail + new
+│   │   │       │   ├── [credentialId]/
+│   │   │       │   └── new/
+│   │   │       └── executions/     #       Execution history + detail
+│   │   │           └── [executionId]/
+│   │   ├── actions/                #   Server Actions
+│   │   │   └── realtime.ts         #     Inngest realtime subscription tokens
+│   │   ├── api/                    #   HTTP API routes
+│   │   │   ├── auth/[...all]/      #     Better Auth catch-all handler
+│   │   │   ├── inngest/            #     Inngest webhook endpoint
+│   │   │   ├── trpc/[trpc]/        #     tRPC HTTP handler
+│   │   │   ├── webhooks/           #     External webhook receivers
+│   │   │   │   ├── google-form/    #       Google Form submissions
+│   │   │   │   └── stripe/         #       Stripe events
+│   │   │   └── sentry-example-api/ #     Sentry sample route
+│   │   ├── sentry-example-page/    #   Sentry sample frontend page
+│   │   ├── global-error.tsx        #   App-level Sentry error boundary
+│   │   ├── globals.css             #   Global styles + Tailwind
+│   │   └── layout.tsx              #   Root layout
+│   │
+│   ├── components/                 # ─── Shared UI Components ─────────────
+│   │   ├── app-header.tsx          #   Top navigation bar
+│   │   ├── app-sidebar.tsx         #   Dashboard sidebar navigation
+│   │   ├── background.tsx          #   Background visual effects
+│   │   ├── entity-components.tsx   #   Reusable entity list/detail UI
+│   │   ├── initial-node.tsx        #   INITIAL placeholder node
+│   │   ├── node-selector.tsx       #   Node-type picker modal
+│   │   ├── upgrade-modal.tsx       #   Premium upgrade prompt
+│   │   ├── workflow-node.tsx       #   Generic workflow node wrapper
+│   │   ├── react-flow/             #   React Flow primitives
+│   │   │   ├── base-handle.tsx     #     Handle connector component
+│   │   │   ├── base-node.tsx       #     Base node chrome (card + header)
+│   │   │   ├── node-status-indicator.tsx  # Live status badge (loading/success/error)
+│   │   │   └── placeholder-node.tsx      # "Add node" placeholder
+│   │   └── ui/                     #   shadcn/ui + Radix primitives
+│   │
+│   ├── config/                     # ─── Configuration ────────────────────
+│   │   ├── constants.ts            #   App-wide constants
+│   │   └── node-components.ts      #   React Flow node-type → component registry
+│   │
+│   ├── features/                   # ─── Domain Feature Modules ───────────
+│   │   ├── auth/                   #   Authentication
+│   │   │   └── components/         #     login-form, register-form
+│   │   ├── editor/                 #   Visual Workflow Editor
+│   │   │   └── components/         #     editor, editor-header, add-node-button
+│   │   │       └── store/          #       Jotai atoms (editor state)
+│   │   ├── credentials/            #   API Key / Secret Management
+│   │   │   ├── components/         #     credential.tsx, credentials.tsx
+│   │   │   ├── hooks/              #     use-credentials, use-credentials-params
+│   │   │   ├── params.ts           #     URL search-param definitions
+│   │   │   └── server/             #     tRPC router, prefetch, params-loader
+│   │   ├── executions/             #   Workflow Run History & Node Executors
+│   │   │   ├── components/         #     Per-node-type UI + executors
+│   │   │   │   ├── anthropic/      #       node, dialog, executor, action
+│   │   │   │   ├── discord/        #       ↳ same pattern
+│   │   │   │   ├── gemini/         #       ↳ same pattern
+│   │   │   │   ├── http-request/   #       ↳ same pattern
+│   │   │   │   ├── openai/         #       ↳ same pattern
+│   │   │   │   ├── slack/          #       ↳ same pattern
+│   │   │   │   ├── base-execution-node.tsx
+│   │   │   │   ├── execution.tsx   #     Single execution detail page
+│   │   │   │   └── executions.tsx  #     Execution list page
+│   │   │   ├── hooks/              #     use-executions, use-node-status
+│   │   │   ├── lib/
+│   │   │   │   └── executor-registry.ts  # NodeType → executor map
+│   │   │   ├── params.ts
+│   │   │   ├── server/             #     tRPC router, prefetch, params-loader
+│   │   │   └── types.ts            #     NodeExecutor, WorkflowContext types
+│   │   ├── subscriptions/          #   Polar Billing
+│   │   │   └── hooks/              #     use-subscription
+│   │   ├── triggers/               #   Workflow Trigger Nodes
+│   │   │   └── components/
+│   │   │       ├── base-trigger-node.tsx
+│   │   │       ├── google-form-trigger/  # node, dialog, executor, actions, utils
+│   │   │       ├── manual-trigger/       # node, dialog, executor, actions
+│   │   │       └── stripe-trigger/       # node, dialog, executor
+│   │   └── workflows/              #   Workflow CRUD
+│   │       ├── components/          #     workflows.tsx (list page)
+│   │       ├── hooks/               #     use-workflows, use-workflows-params
+│   │       ├── params.ts
+│   │       └── server/              #     tRPC router, prefetch, params-loader
+│   │
+│   ├── hooks/                      # ─── Global React Hooks ───────────────
+│   │   ├── use-entity-search.tsx   #   Generic entity search
+│   │   ├── use-mobile.ts           #   Responsive breakpoint detection
+│   │   ├── use-node-status.ts      #   Inngest realtime node status
+│   │   └── use-upgrade-modal.tsx   #   Premium upgrade modal state
+│   │
+│   ├── inngest/                    # ─── Background Job Engine ────────────
+│   │   ├── client.ts               #   Inngest client instance
+│   │   ├── functions.ts            #   Workflow execution function (execute-workflow)
+│   │   ├── utils.ts                #   Topological sort, sendWorkflowExecution helper
+│   │   └── channel/                #   Inngest Realtime channels
+│   │       ├── anthropic.ts        #     Anthropic execution status channel
+│   │       ├── discord.ts          #     Discord execution status channel
+│   │       ├── gemini.ts           #     Gemini execution status channel
+│   │       ├── google-form-trigger.ts
+│   │       ├── http-request.ts     #     HTTP request execution status channel
+│   │       ├── manual-trigger.ts
+│   │       ├── openai.ts           #     OpenAI execution status channel
+│   │       ├── slack.ts            #     Slack execution status channel
+│   │       └── stripe-trigger.ts
+│   │
+│   ├── lib/                        # ─── Shared Utilities ─────────────────
+│   │   ├── auth.ts                 #   Better Auth server config
+│   │   ├── auth-client.ts          #   Better Auth browser client
+│   │   ├── auth-utils.ts           #   requireAuth / requireUnauth helpers
+│   │   ├── db.ts                   #   Prisma client singleton
+│   │   ├── encryption.ts           #   Cryptr encrypt / decrypt (credentials)
+│   │   ├── polar.ts                #   Polar SDK client
+│   │   └── utils.ts                #   cn() and misc helpers
+│   │
+│   ├── trpc/                       # ─── tRPC Wiring ──────────────────────
+│   │   ├── client.tsx              #   React Query + tRPC provider
+│   │   ├── init.ts                 #   Context, baseProcedure, protectedProcedure, premiumProcedure
+│   │   ├── query-client.ts         #   TanStack Query client factory
+│   │   ├── server.tsx              #   Server-side tRPC caller
 │   │   └── routers/
-│   │       └── _app.ts
-│   └── generated/
-│       └── prisma/        # Prisma Client output
-├── public/                # Static assets (icons, images)
-├── sentry.server.config.ts
-├── sentry.edge.config.ts
-├── package.json
-├── next.config.ts
-├── postcss.config.mjs
-├── biome.json
-├── components.json
-├── tsconfig.json
-└── README.md
+│   │       └── _app.ts             #   Root router (workflows, credentials, executions)
+│   │
+│   ├── generated/
+│   │   └── prisma/                 #   Auto-generated Prisma Client
+│   ├── instrumentation.ts          #   Server-side Sentry init
+│   └── instrumentation-client.ts   #   Client-side Sentry + session replay
+│
+├── public/                         # Static assets & icons
+├── sentry.server.config.ts         # Sentry server runtime config
+├── sentry.edge.config.ts           # Sentry edge runtime config
+├── next.config.ts                  # Next.js configuration
+├── biome.json                      # Biome linter/formatter config
+├── components.json                 # shadcn/ui CLI config
+├── tsconfig.json                   # TypeScript configuration
+├── postcss.config.mjs              # PostCSS (Tailwind)
+└── package.json
+```
+
+## Architecture
+
+### High-Level System Overview
+
+```mermaid
+graph TB
+    subgraph Client["🖥️ Browser"]
+        UI["React 19 UI<br/>(App Router + RSC)"]
+        RQ["TanStack Query"]
+        TRPC_C["tRPC Client"]
+        JOTAI["Jotai Atoms<br/>(Editor State)"]
+        RF["React Flow<br/>(Visual Editor)"]
+    end
+
+    subgraph NextServer["⚡ Next.js Server"]
+        AppRouter["App Router<br/>(Pages + Layouts)"]
+        TRPC_S["tRPC Server<br/>(Routers)"]
+        AUTH["Better Auth<br/>(Sessions)"]
+        SA["Server Actions<br/>(Realtime Tokens)"]
+        WH["Webhook Routes<br/>(/api/webhooks/*)"]
+    end
+
+    subgraph Data["🗄️ Data Layer"]
+        PRISMA["Prisma ORM"]
+        PG[("PostgreSQL")]
+    end
+
+    subgraph BackgroundJobs["⚙️ Background Jobs"]
+        INN_CLIENT["Inngest Client"]
+        INN_FN["execute-workflow<br/>Function"]
+        EXEC_REG["Executor Registry"]
+        RT["Inngest Realtime<br/>(Channels)"]
+    end
+
+    subgraph External["🌐 External Services"]
+        AI["AI Providers<br/>(OpenAI / Gemini / Claude)"]
+        POLAR["Polar<br/>(Billing)"]
+        SENTRY["Sentry<br/>(Monitoring)"]
+        DISCORD["Discord API"]
+        SLACK["Slack API"]
+        STRIPE["Stripe Webhooks"]
+        GFORM["Google Forms"]
+    end
+
+    UI --> RQ --> TRPC_C --> TRPC_S
+    UI --> RF --> JOTAI
+    TRPC_S --> AUTH
+    TRPC_S --> PRISMA --> PG
+    TRPC_S --> INN_CLIENT
+    SA --> RT
+    RT -.->|"realtime status"| UI
+    WH --> INN_CLIENT
+    INN_CLIENT --> INN_FN --> EXEC_REG
+    EXEC_REG --> AI
+    EXEC_REG --> DISCORD
+    EXEC_REG --> SLACK
+    EXEC_REG --> PRISMA
+    AUTH --> POLAR
+    NextServer --> SENTRY
+    Client --> SENTRY
+    STRIPE --> WH
+    GFORM --> WH
+```
+
+### Request Lifecycle
+
+Shows how a typical user action flows through the stack:
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant RSC as App Router (RSC)
+    participant tRPC as tRPC Router
+    participant Auth as Better Auth
+    participant Polar as Polar SDK
+    participant DB as PostgreSQL
+    participant Inngest as Inngest
+
+    B->>RSC: Navigate to /workflows
+    RSC->>tRPC: Server-side prefetch (workflows.getMany)
+    tRPC->>Auth: getSession(headers)
+    Auth-->>tRPC: Session { user }
+    tRPC->>DB: prisma.workflow.findMany()
+    DB-->>tRPC: Workflow[]
+    tRPC-->>RSC: Hydrated data
+    RSC-->>B: Rendered page + dehydrated cache
+
+    B->>tRPC: workflows.create (mutation)
+    tRPC->>Auth: getSession(headers)
+    Auth-->>tRPC: Session { user }
+    tRPC->>Polar: customers.getStateExternal()
+    Polar-->>tRPC: activeSubscriptions ✅
+    tRPC->>DB: prisma.workflow.create()
+    DB-->>tRPC: Workflow
+    tRPC-->>B: Created workflow
+
+    B->>tRPC: Execute workflow (mutation)
+    tRPC->>Inngest: send("workflows/execute.workflow")
+    Inngest-->>tRPC: Event accepted
+    tRPC-->>B: Execution started
+    Inngest->>DB: Create Execution record
+    Inngest->>Inngest: Run nodes in topological order
+    Inngest-->>B: Realtime status updates (loading → success/error)
+```
+
+### Workflow Execution Pipeline
+
+Details how Inngest executes a workflow graph node-by-node:
+
+```mermaid
+flowchart TD
+    START(["Event: workflows/execute.workflow"]) --> CREATE["step.run: create-execution<br/>Create Execution record in DB"]
+    CREATE --> PREPARE["step.run: prepare-workflow<br/>Load nodes + connections"]
+    PREPARE --> TOPO["Topological Sort<br/>(toposort library)"]
+    TOPO --> USERID["step.run: find-user-id"]
+    USERID --> LOOP{"For each node<br/>in sorted order"}
+    LOOP --> LOOKUP["getExecutor(node.type)<br/>from executor-registry"]
+    LOOKUP --> EXEC["executor(data, nodeId,<br/>userId, context, step)"]
+
+    EXEC --> RT_LOAD["step.realtime.publish<br/>status: loading"]
+    RT_LOAD --> WORK["Node-specific work<br/>(AI call, HTTP request,<br/>Discord/Slack message, etc.)"]
+    WORK --> RT_OK["step.realtime.publish<br/>status: success"]
+    RT_OK --> CTX["Merge result<br/>into context"]
+    CTX --> LOOP
+
+    WORK -->|error| RT_ERR["step.realtime.publish<br/>status: error"]
+    RT_ERR --> FAIL["Throw / onFailure handler<br/>marks Execution FAILED"]
+
+    LOOP -->|done| UPDATE["step.run: update-execution<br/>status: SUCCESS"]
+    UPDATE --> DONE(["Return result"])
+
+    style START fill:#4f46e5,color:#fff
+    style DONE fill:#16a34a,color:#fff
+    style FAIL fill:#dc2626,color:#fff
+```
+
+### Feature Module Pattern
+
+Each domain feature follows a consistent internal structure:
+
+```mermaid
+graph LR
+    subgraph Feature["features/<name>/"]
+        COMP["components/<br/>React components<br/>(node, dialog, list, detail)"]
+        HOOKS["hooks/<br/>React Query wrappers<br/>(use-*, use-*-params)"]
+        SERVER["server/<br/>tRPC router<br/>+ prefetch + params-loader"]
+        PARAMS["params.ts<br/>nuqs search-param<br/>definitions"]
+        TYPES["types.ts<br/>Shared TypeScript types"]
+    end
+
+    subgraph NodeModule["components/<node-type>/"]
+        NODE["node.tsx<br/>React Flow node UI"]
+        DIALOG["dialog.tsx<br/>Config dialog"]
+        EXECUTOR["executor.ts<br/>Inngest step logic"]
+        ACTION["action.ts<br/>Server Action for<br/>realtime token"]
+    end
+
+    COMP --> NodeModule
+    HOOKS --> SERVER
+    SERVER --> PARAMS
+
+    style Feature fill:#f8fafc,stroke:#334155
+    style NodeModule fill:#eff6ff,stroke:#3b82f6
+```
+
+### Registered Node Types
+
+| Category | Node Type | UI Component | Executor | Inngest Channel |
+|----------|-----------|-------------|----------|-----------------|
+| **Triggers** | `MANUAL_TRIGGER` | ManualTriggerNode | manualTriggerExecutor | manual-trigger |
+| | `GOOGLE_FORM_TRIGGER` | GoogleFormTrigger | googleFormTriggerExecutor | google-form-trigger |
+| | `STRIPE_TRIGGER` | StripeTriggerNode | stripeTriggerExecutor | stripe-trigger |
+| **AI** | `GEMINI` | GeminiNode | geminiExecutor | gemini-execution |
+| | `OPENAI` | OpenAiNode | openAiExecutor | openai-execution |
+| | `ANTHROPIC` | AnthropicNode | anthropicExecutor | anthropic-execution |
+| **Actions** | `HTTP_REQUEST` | HttpRequestNode | httpRequestExecutor | http-request-execution |
+| | `DISCORD` | DiscordNode | discordExecutor | discord-execution |
+| | `SLACK` | SlackNode | slackExecutor | slack-execution |
+| **Internal** | `INITIAL` | InitialNode | _(passthrough)_ | — |
+
+### Database Schema (ER Diagram)
+
+```mermaid
+erDiagram
+    User ||--o{ Session : "has"
+    User ||--o{ Account : "has"
+    User ||--o{ Workflow : "owns"
+    User ||--o{ Credential : "owns"
+    Workflow ||--o{ Node : "contains"
+    Workflow ||--o{ Connection : "contains"
+    Workflow ||--o{ Execution : "produces"
+    Node ||--o{ Connection : "fromNode"
+    Node ||--o{ Connection : "toNode"
+    Credential ||--o{ Node : "used by"
+
+    User {
+        string id PK
+        string name
+        string email UK
+        boolean emailVerified
+        string image
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Session {
+        string id PK
+        datetime expiresAt
+        string token UK
+        string ipAddress
+        string userAgent
+        string userId FK
+    }
+
+    Account {
+        string id PK
+        string accountId
+        string providerId
+        string userId FK
+        string accessToken
+        string refreshToken
+    }
+
+    Verification {
+        string id PK
+        string identifier
+        string value
+        datetime expiresAt
+    }
+
+    Credential {
+        string id PK
+        string name
+        string value
+        CredentialType type
+        string userId FK
+    }
+
+    Workflow {
+        string id PK
+        string name
+        string userId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Node {
+        string id PK
+        string workflowId FK
+        string name
+        NodeType type
+        json position
+        json data
+        string credentialId FK
+    }
+
+    Connection {
+        string id PK
+        string workflowId FK
+        string fromNodeId FK
+        string toNodeId FK
+        string fromOutput
+        string toInput
+    }
+
+    Execution {
+        string id PK
+        string workflowId FK
+        ExecutionStatus status
+        string error
+        string inngestEventId UK
+        json output
+        datetime startedAt
+        datetime completedAt
+    }
+```
+
+### tRPC Router Hierarchy
+
+```mermaid
+graph TD
+    ROOT["appRouter (_app.ts)"] --> WF["workflows"]
+    ROOT --> CRED["credentials"]
+    ROOT --> EXEC["executions"]
+
+    WF --> WF_C["create (premiumProcedure)"]
+    WF --> WF_R["remove"]
+    WF --> WF_U["updateName"]
+    WF --> WF_G1["getOne"]
+    WF --> WF_G2["getMany (paginated)"]
+
+    CRED --> CRED_C["create"]
+    CRED --> CRED_R["remove"]
+    CRED --> CRED_G1["getOne"]
+    CRED --> CRED_G2["getMany"]
+
+    EXEC --> EXEC_G1["getOne"]
+    EXEC --> EXEC_G2["getMany (paginated)"]
+
+    style ROOT fill:#6366f1,color:#fff
 ```
 
 ## Available Scripts
