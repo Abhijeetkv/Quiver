@@ -1,7 +1,7 @@
 "use client";
 
 import { useReactFlow, type Node, type NodeProps } from "@xyflow/react";
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { BaseExecutionNode } from "../base-execution-node";
 import { GeminiDialog, GeminiFormValues } from "./dialog";
 import { useNodeStatus } from "../../hooks/use-node-status";
@@ -29,6 +29,13 @@ export const GeminiNode = memo((props: NodeProps<GeminiNodeType>) => {
   });
 
   const handleOpenSettings = () => setDialogOpen(true);
+
+  // Auto-open dialog when node is unconfigured (freshly added)
+  useEffect(() => {
+    if (!props.data.variableName) {
+      setDialogOpen(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (values: GeminiFormValues) => {
     setNodes((nodes) => nodes.map((node) => {
