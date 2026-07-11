@@ -16,7 +16,13 @@ const Page = async ({ params }: PageProps) => {
   await requireAuth();
 
   const { credentialId } = await params;
-  prefetchCredential(credentialId);
+
+  try {
+    await prefetchCredential(credentialId);
+  } catch {
+    // If prefetch fails (e.g. credential not found), let the client-side
+    // ErrorBoundary handle it when the query re-runs on the client.
+  }
 
   return (
     <div className="p-4 md:px-10 md:py-6 h-full">
