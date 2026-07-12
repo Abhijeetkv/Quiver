@@ -7,9 +7,13 @@ import ky from "ky";
 
 Handlebars.registerHelper("json", (context) => {
   const jsonString = JSON.stringify(context, null, 2);
-  const safeString = new Handlebars.SafeString(jsonString);
+  return new Handlebars.SafeString(jsonString);
+});
 
-  return safeString;
+// NEW: Helper for object keys with spaces
+Handlebars.registerHelper("get", (obj: any, key: string) => {
+  if (!obj) return "";
+  return obj[key];
 });
 
 type DiscordData = {
@@ -43,11 +47,15 @@ export const discordExecutor: NodeExecutor<DiscordData> = async ({
         status: "error",
       },
     );
-    throw new NonRetriableError("Discord node: Message content is required");
+
+    throw new NonRetriableError(
+      "Discord node: Message content is required",
+    );
   }
 
   const rawContent = Handlebars.compile(data.content)(context);
   const content = decode(rawContent);
+
   const username = data.username
     ? decode(Handlebars.compile(data.username)(context))
     : undefined;
@@ -55,18 +63,22 @@ export const discordExecutor: NodeExecutor<DiscordData> = async ({
   try {
     const result = await step.run("discord-webhook", async () => {
       if (!data.webhookUrl) {
-        throw new NonRetriableError("Discord node: Webhook URL is required");
+        throw new NonRetriableError(
+          "Discord node: Webhook URL is required",
+        );
       }
 
       await ky.post(data.webhookUrl, {
         json: {
-          content: content.slice(0, 2000), // Discord's max message length
+          content: content.slice(0, 2000),
           username,
         },
       });
 
       if (!data.variableName) {
-        throw new NonRetriableError("Discord node: Variable name is missing");
+        throw new NonRetriableError(
+          "Discord node: Variable name is missing",
+        );
       }
 
       return {
@@ -76,7 +88,7 @@ export const discordExecutor: NodeExecutor<DiscordData> = async ({
         },
       };
     });
-    
+
     await step.realtime.publish(
       `discord-success-${nodeId}`,
       discordChannel.status,
@@ -96,6 +108,7 @@ export const discordExecutor: NodeExecutor<DiscordData> = async ({
         status: "error",
       },
     );
+
     throw error;
   }
 };
