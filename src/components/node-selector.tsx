@@ -2,7 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { useReactFlow } from "@xyflow/react";
-import { GlobeIcon, MousePointerIcon } from "lucide-react";
+import { DatabaseIcon, GlobeIcon, MailIcon, MousePointerIcon } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import {
@@ -85,6 +85,30 @@ const executionNodes: NodeTypeOption[] = [
     label: "Slack",
     description: "Send a message to a Slack channel",
     icon: "/icons/slack.svg",
+  },
+  {
+    type: NodeType.EMAIL,
+    label: "Email",
+    description: "Send an email via Resend",
+    icon: "/icons/email.png",
+  },
+  {
+    type: NodeType.POSTGRESQL,
+    label: "PostgreSQL",
+    description: "Execute SQL queries on PostgreSQL",
+    icon: "/icons/postgre.png",
+  },
+  {
+    type: NodeType.MONGODB,
+    label: "MongoDB",
+    description: "Query and operate on MongoDB collections",
+    icon: "/icons/mongodb.png",
+  },
+  {
+    type: NodeType.MYSQL,
+    label: "MySQL",
+    description: "Execute SQL queries on MySQL",
+    icon: "/icons/mysql.png",
   }
 ];
 

@@ -154,6 +154,10 @@ enum NodeType {
   OPENAI
   DISCORD
   SLACK
+  EMAIL
+  POSTGRESQL
+  MONGODB
+  MYSQL
 }
 
 enum ExecutionStatus {
