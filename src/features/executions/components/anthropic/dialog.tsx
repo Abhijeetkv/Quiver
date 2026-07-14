@@ -158,7 +158,7 @@ export const AnthropicDialog = ({
                         >
                           <div className="flex items-center gap-2">
                             <Image
-                              src="/logos/anthropic.svg"
+                              src="/icons/anthropic.svg"
                               alt="Anthropic"
                               width={16}
                               height={16}

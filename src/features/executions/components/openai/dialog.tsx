@@ -158,7 +158,7 @@ export const OpenAiDialog = ({
                         >
                           <div className="flex items-center gap-2">
                             <Image
-                              src="/logos/openai.svg"
+                              src="/icons/openai.svg"
                               alt="OpenAI"
                               width={16}
                               height={16}

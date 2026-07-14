@@ -158,7 +158,7 @@ export const GeminiDialog = ({
                         >
                           <div className="flex items-center gap-2">
                             <Image
-                              src="/logos/gemini.svg"
+                              src="/icons/gemini.svg"
                               alt="Gemini"
                               width={16}
                               height={16}

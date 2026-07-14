@@ -9,6 +9,10 @@ import { anthropicExecutor } from '../components/anthropic/executor';
 import { openAiExecutor } from '../components/openai/executor';
 import { slackExecutor } from '../components/slack/executor';
 import { discordExecutor } from '../components/discord/executor';
+import { emailExecutor } from '../components/email/executor';
+import { postgresqlExecutor } from '../components/PostgreSQL/executor';
+import { mongodbExecutor } from '../components/mongodb/executor';
+import { mysqlExecutor } from '../components/mysql/executor';
 
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
@@ -21,6 +25,10 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.OPENAI]: openAiExecutor, 
   [NodeType.DISCORD]: discordExecutor,
   [NodeType.SLACK]: slackExecutor,
+  [NodeType.EMAIL]: emailExecutor,
+  [NodeType.POSTGRESQL]: postgresqlExecutor,
+  [NodeType.MONGODB]: mongodbExecutor,
+  [NodeType.MYSQL]: mysqlExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {
