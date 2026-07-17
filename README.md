@@ -1016,12 +1016,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-
-- Inspired by [Zapier](https://zapier.com/) and [Make](https://www.make.com/)
-- Built with amazing open-source tools
-- UI components from [shadcn/ui](https://ui.shadcn.com/)
-
 ## Support
 
 - 📧 Email: support@quiver.dev
