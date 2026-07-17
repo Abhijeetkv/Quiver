@@ -6,8 +6,9 @@ import { z } from "zod";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
+
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -44,23 +45,11 @@ export const LoginForm = () => {
     },
   });
 
-  const signInGithub = async () => {
-    await authClient.signIn.social(
-      {
-        provider: "github",
-      },
-      {
-        onSuccess: () => {
-          router.push("/");
-        },
-        onError: () => {
-          toast.error("Something went wrong");
-        },
-      },
-    );
-  };
+  const isPending = form.formState.isSubmitting;
 
   const signInGoogle = async () => {
+    form.clearErrors();
+
     await authClient.signIn.social(
       {
         provider: "google",
@@ -72,7 +61,25 @@ export const LoginForm = () => {
         onError: () => {
           toast.error("Something went wrong");
         },
+      }
+    );
+  };
+
+  const signInGithub = async () => {
+    form.clearErrors();
+
+    await authClient.signIn.social(
+      {
+        provider: "github",
       },
+      {
+        onSuccess: () => {
+          router.push("/");
+        },
+        onError: () => {
+          toast.error("Something went wrong");
+        },
+      }
     );
   };
 
@@ -90,11 +97,9 @@ export const LoginForm = () => {
         onError: (err) => {
           toast.error(err.error.message);
         },
-      },
+      }
     );
   };
-
-  const isPending = form.formState.isSubmitting;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#E9D8FD] relative overflow-hidden">
@@ -104,22 +109,17 @@ export const LoginForm = () => {
           <Image src="/icons/logo.png" alt="quiver" width={32} height={32} />
           <h1 className="text-2xl font-bold text-gray-800">Quiver</h1>
         </div>
-        {/* <div className="flex items-center">
-          <Link href="/signup" className="text-white text-bold px-6 py-2 rounded-2xl bg-[#7C3AED] hover:bg-[#6D28D9] hover:underline">
-            Sign Up
-          </Link>
-        </div> */}
       </div>
 
-      {/* Center Card */}
+      {/* Login Card */}
       <div className="flex flex-1 items-center justify-center px-4 relative z-10">
         <Card className="w-full max-w-md bg-white shadow-xl rounded-2xl border-0">
           <CardHeader className="text-center">
             <CardTitle className="text-xl font-bold text-gray-800">
               Welcome Back!
             </CardTitle>
-            <CardDescription className="text-gray-600 ">
-              Hey, Enter your details to get sign in to your account
+            <CardDescription className="text-gray-600">
+              Hey, Enter your details to sign in to your account
             </CardDescription>
           </CardHeader>
 
@@ -179,9 +179,11 @@ export const LoginForm = () => {
                 </div>
 
                 <Button
+                  type="button"
                   variant="outline"
                   className="w-full"
                   onClick={signInGoogle}
+                  disabled={isPending}
                 >
                   <Image
                     src="/icons/google.png"
@@ -192,14 +194,17 @@ export const LoginForm = () => {
                   />
                   Login with Google
                 </Button>
+
                 <Button
+                  type="button"
                   variant="outline"
                   className="w-full"
                   onClick={signInGithub}
+                  disabled={isPending}
                 >
                   <Image
                     src="/icons/github.svg"
-                    alt="Apple"
+                    alt="Github"
                     width={20}
                     height={20}
                     className="mr-2"
@@ -208,7 +213,7 @@ export const LoginForm = () => {
                 </Button>
 
                 <p className="text-center text-sm text-gray-700">
-                  Don’t have an account?{" "}
+                  Don't have an account?{" "}
                   <Link
                     href="/signup"
                     className="text-[#7C3AED] font-semibold hover:underline"
@@ -221,21 +226,6 @@ export const LoginForm = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* <Image
-        src="/illustration-left.svg"
-        alt=""
-        width={300}
-        height={300}
-        className="absolute bottom-0 left-0 opacity-90"
-      />
-      <Image
-        src="/illustration-right.svg"
-        alt=""
-        width={350}
-        height={350}
-        className="absolute bottom-0 right-0 opacity-90"
-      /> */}
     </div>
   );
 };
